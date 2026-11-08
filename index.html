@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SonicScope — Audio Analysis Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- LOADING SCREEN -->
+    <div id="loading-screen" class="loading-screen" role="alert" aria-live="polite">
+        <!-- Header -->
+        <header class="loading-header">
+            <div class="loading-logo">
+                <svg class="loading-logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12h2l3-9 4 18 4-18 3 9h2"/>
+                </svg>
+                <div class="loading-logo-text">
+                    <h1>SonicScope</h1>
+                    <span class="loading-logo-subtitle">AUDIO ANALYSIS LAB</span>
+                </div>
+            </div>
+            <div class="loading-status-indicator">
+                <span class="loading-status-dot"></span>
+                <span id="loading-status-text" class="loading-status-label">SYSTEM INITIALIZING</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="loading-main">
+            <span class="loading-label">DIGITAL SIGNAL PROCESSING</span>
+            
+            <!-- Waveform Analyzer -->
+            <div class="waveform-analyzer">
+                <div class="waveform-grid"></div>
+                <canvas id="waveform-canvas-decorative" class="waveform-canvas"></canvas>
+                <div class="waveform-scanner"></div>
+                <div class="waveform-center-line"></div>
+            </div>
+
+            <h2 id="loading-title" class="loading-title">Initializing SonicScope</h2>
+            <p id="loading-description" class="loading-description">Preparing the audio analysis environment...</p>
+            
+            <!-- Progress Bar -->
+            <div class="loading-progress-container">
+                <div class="loading-progress-track">
+                    <div id="loading-progress-bar" class="loading-progress-bar"></div>
+                </div>
+                <span id="loading-progress-text" class="loading-progress-text">LOADING INTERFACE</span>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="loading-footer">
+            <span>LOCAL PROCESSING</span>
+            <span class="loading-separator">·</span>
+            <span>FFT</span>
+            <span class="loading-separator">·</span>
+            <span>STFT</span>
+            <span class="loading-separator">·</span>
+            <span>RMS</span>
+        </footer>
+    </div>
+
+    <!-- MAIN APPLICATION -->
+    <header id="app-header">
+        <div class="header-content">
+            <div class="logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12h2l3-9 4 18 4-18 3 9h2"/>
+                </svg>
+                <h1>SonicScope</h1>
+            </div>
+            <p class="subtitle">Audio Analysis Lab</p>
+        </div>
+        <div id="status-indicator" class="status ready" aria-live="polite">
+            <span class="status-dot"></span>
+            <span id="status-text">Ready</span>
+        </div>
+    </header>
+
+    <main id="app-main">
+        <section id="upload-section" class="panel">
+            <h2>Audio Upload</h2>
+            <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Upload audio file">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <p>Drag & drop audio file here or click to browse</p>
+                <span class="hint">Supports WAV, MP3, OGG, FLAC (Max 25MB)</span>
+                <input type="file" id="file-input" accept="audio/*" hidden>
+            </div>
+            <div id="file-info" class="file-info hidden"></div>
+        </section>
+
+        <section id="player-section" class="panel hidden">
+            <h2>Audio Player</h2>
+            <div class="player-controls">
+                <button id="btn-play" class="btn-icon" aria-label="Play">▶</button>
+                <button id="btn-pause" class="btn-icon hidden" aria-label="Pause">⏸</button>
+                <button id="btn-reset-play" class="btn-icon" aria-label="Reset playback">⏮</button>
+                <input type="range" id="progress-bar" min="0" max="100" value="0" step="0.01" aria-label="Seek">
+                <span id="current-time" class="time-display">0:00</span>
+                <span class="time-separator">/</span>
+                <span id="total-time" class="time-display">0:00</span>
+                <button id="btn-mute" class="btn-icon" aria-label="Mute">🔊</button>
+                <input type="range" id="volume-bar" min="0" max="1" value="1" step="0.01" aria-label="Volume">
+            </div>
+        </section>
+
+        <section id="info-section" class="grid-2 hidden">
+            <div class="panel">
+                <h2>Audio Information</h2>
+                <dl id="audio-info-list" class="info-list"></dl>
+            </div>
+            <div class="panel">
+                <h2>Analysis Summary</h2>
+                <dl id="analysis-summary-list" class="info-list"></dl>
+                <div id="text-summary" class="text-summary"></div>
+            </div>
+        </section>
+
+        <section id="waveform-section" class="panel hidden">
+            <div class="panel-header">
+                <h2>Waveform</h2>
+                <div class="window-controls">
+                    <label>Start (s): <input type="number" id="window-start" step="0.01" min="0" value="0"></label>
+                    <label>End (s): <input type="number" id="window-end" step="0.01" min="0" value="0"></label>
+                    <button id="btn-apply-window" class="btn">Apply</button>
+                    <button id="btn-clear-window" class="btn btn-secondary">Clear</button>
+                </div>
+            </div>
+            <div class="canvas-container">
+                <canvas id="waveform-canvas"></canvas>
+                <div id="waveform-tooltip" class="tooltip hidden"></div>
+            </div>
+        </section>
+
+        <section id="spectrum-section" class="panel hidden">
+            <h2>Frequency Spectrum</h2>
+            <div class="canvas-container">
+                <canvas id="spectrum-canvas"></canvas>
+                <div id="spectrum-tooltip" class="tooltip hidden"></div>
+            </div>
+        </section>
+
+        <section id="bands-section" class="panel hidden">
+            <h2>Frequency Band Analysis</h2>
+            <div id="bands-list" class="bands-grid"></div>
+        </section>
+
+        <section id="spectrogram-section" class="panel hidden">
+            <h2>Spectrogram</h2>
+            <div class="canvas-container">
+                <canvas id="spectrogram-canvas"></canvas>
+                <div id="spectrogram-tooltip" class="tooltip hidden"></div>
+            </div>
+            <div class="legend" id="spectrogram-legend">
+                <span>-100 dB</span>
+                <div class="legend-gradient"></div>
+                <span>0 dB</span>
+            </div>
+        </section>
+
+        <section id="clipping-section" class="panel hidden">
+            <h2>Clipping Detection</h2>
+            <div id="clipping-info" class="info-list"></div>
+        </section>
+    </main>
+
+    <footer id="app-footer">
+        <button id="btn-reset-all" class="btn btn-danger hidden">Reset & Clear Audio</button>
+    </footer>
+
+    <div id="toast-container" aria-live="assertive"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
